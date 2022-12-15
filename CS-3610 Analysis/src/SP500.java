@@ -11,6 +11,7 @@ public class SP500 {
     public static void main(String[] args) {
        readStockDailyFromCSV("C:\\Users\\Shahd Osman\\Documents\\Fall 2022-23\\CS-3610- Analysis and Design of Algorithms\\Historical Prices.csv");
 
+//        Sample Input:
 //        stockDailyList.add(new StockDaily("1/2/12", 2001));
 //        stockDailyList.add(new StockDaily("2/2/12", 2030));
 //        stockDailyList.add(new StockDaily("3/2/12", (float) 1900.95));
@@ -21,22 +22,21 @@ public class SP500 {
 //        stockDailyList.add(new StockDaily("14/2/12",  2001));
 //        stockDailyList.add(new StockDaily("5/2/12", 2400));
 
-//         let's print all the person read from CSV file
 //        for (int i = 0; i< stockDailyList.size(); i++) {
 //            System.out.print(stockDailyList.get(i) + ", ");
 //        }
 //        System.out.println();
 //
 //
-//        List<Interval> l = getShocksIntervals_technique1(0.20);
-//        int n = 1;
-//        for (Interval i:
-//             l) {
-//            System.out.println(n+": "+i + ", ");
-//            n++;
-//        }
-//
-        getShocksIntervals_technique2(3);
+        List<Interval> l = getShocksIntervals_technique1(0.05);
+        int n = 1;
+        for (Interval i:
+             l) {
+            System.out.println(n+": "+i + ", ");
+            n++;
+        }
+
+//        getShocksIntervals_technique2(3);
 //        for (StockDaily n :
 //                stockDailyList) {
 //            System.out.println(n + ", ");
@@ -99,51 +99,46 @@ public class SP500 {
 //            C [ j ] = C [ j ] - 1 ; /* we decrease the value o f C [ j ] by one, to place other equal valuesi n to the vector */
 //        }
 //    }
+
+    /**
+     * Brute Force algorithm, time complexity of O(n^3)
+     * we go through each stockDaily and compare it with each other, we get the % of each value and find the % drop
+     * when found we then search for the same value again
+     * @param percentage type double, the a% we are finding
+     * @return List<Interval> containing the interval where the drop occurred
+     */
     public static List<Interval> getShocksIntervals_technique1(double percentage){
         List<Interval> l = new ArrayList<>();
         StockDaily current, next; double val;
 
-
         for(int i = 0; i< stockDailyList.size()-1; i++){
             current = stockDailyList.get(i);
-//            if (l.contains(current) == true)
-//                break;
 
-            val = Math.round((current.value * percentage)); //-a%
+            val = (current.value * percentage); //a% of the current value
 
             for(int j = i; j< stockDailyList.size()-1; j++){
                 next = stockDailyList.get(j);
-//
-//
-//                System.out.println("val: "+ val + " next.val: " + next.value);
-//                System.out.println(val == next.value);
 
                  if ((float)next.value == current.value-val){
                  for(int k = j; k< stockDailyList.size()-1; k++){
                      next = stockDailyList.get(k);
 
-                     val = Math.round((current.value * percentage)); //a%
-
-//                     System.out.println("Inner Loop:\nval: "+ val + " next.val: " + next.value);
-//                     System.out.println(val == next.value);
-
                      if ((float)next.value == current.value){
                          Interval interval = new Interval(current, next);
-                         if (l.contains(interval) == false)
-                            l.add(interval);
-                     }
-                 }
-             }
-        }
-        }
+                         if (!l.contains(interval))
+                            l.add(interval);}}}}}
+        for(int i = 0; i<l.size()-1; i++){
+            String currSDate = l.get(i).start.date, nextSDate = l.get(i+1).start.date;
+            String currEDate = l.get(i).end.date, nextEDate = l.get(i+1).end.date;
+            if ((Objects.equals(currSDate, nextSDate)) || (Objects.equals(currEDate, nextEDate))){
+                l.remove(i+1);}}
 
         return l;
     }
 
     public static List<Interval> getShocksIntervals_technique2(double percentage){
         List<Interval> l = new ArrayList<>();
-        List<StockDaily> duplicates = new ArrayList<>();
-        double med = stockDailyList.get(stockDailyList.size()/ 2).value;
+        List<StockDaily> duplicates = new ArrayList<>(); //that contain all the stockDaily's with the same values
         stockDailyList.sort(new stockDailyComparator());
 
         for (int i = 0; i < stockDailyList.size()-2; i++){
@@ -164,10 +159,10 @@ public class SP500 {
 
 
 
-        for (StockDaily n :
-                duplicates) {
-            System.out.println(n + ", ");
-        }
+//        for (StockDaily n :
+//                duplicates) {
+//            System.out.println(n + ", ");
+//        }
 
 
         return l;
