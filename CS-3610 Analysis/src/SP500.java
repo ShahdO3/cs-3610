@@ -14,13 +14,13 @@ public class SP500 {
 //        Sample Input:
 //        stockDailyList.add(new StockDaily("1/2/12", 2001));
 //        stockDailyList.add(new StockDaily("2/2/12", 2030));
-//        stockDailyList.add(new StockDaily("3/2/12", (float) 1900.95));
-//        stockDailyList.add(new StockDaily("4/2/12",  2001));
-//        stockDailyList.add(new StockDaily("11/2/12", 2001));
 //        stockDailyList.add(new StockDaily("2/2/12", 2030));
-//        stockDailyList.add(new StockDaily("3/2/12", (float) 1900.95));
-//        stockDailyList.add(new StockDaily("14/2/12",  2001));
+//        stockDailyList.add(new StockDaily("3/2/12",  1900.95));
+//        stockDailyList.add(new StockDaily("3/2/12",  1900.95));
+//        stockDailyList.add(new StockDaily("4/2/12",  2001));
 //        stockDailyList.add(new StockDaily("5/2/12", 2400));
+//        stockDailyList.add(new StockDaily("11/2/12", 2001));
+//        stockDailyList.add(new StockDaily("14/2/12",  2001));
 
 //        for (int i = 0; i< stockDailyList.size(); i++) {
 //            System.out.print(stockDailyList.get(i) + ", ");
@@ -48,31 +48,23 @@ public class SP500 {
         try {
             File file = new File(path);
             BufferedReader br = new BufferedReader(new FileReader(file));
-            // read the first line from the text file
 
+            // read the first line from the text file
             String line = br.readLine();
             line = br.readLine();
 
             // loop until all lines are read
             while (line != null) {
 
-                // use string.split to load a string array with the values from
-                // each line of
-                // the file, using a comma as the delimiter
                 String[] attributes = line.split(",");
-
 
                 String date = attributes[0];
                 float value = Float.parseFloat(attributes[1]);
 
-
                 StockDaily stockDaily = new StockDaily(date, value);
 
-                // adding book into ArrayList
                 stockDailyList.add(stockDaily);
 
-                // read next line before looping
-                // if end of file reached, line would be null
                 line = br.readLine();
             }
             br.close();
@@ -109,30 +101,29 @@ public class SP500 {
      */
     public static List<Interval> getShocksIntervals_technique1(double percentage){
         List<Interval> l = new ArrayList<>();
-        StockDaily current, next; double val;
+        StockDaily current, drop, backUp; double val; int end = 0;
 
         for(int i = 0; i< stockDailyList.size()-1; i++){
             current = stockDailyList.get(i);
 
-            val = (current.value * percentage); //a% of the current value
+            val = Math.round(current.value * percentage); //a% of the current value
 
-            for(int j = i; j< stockDailyList.size()-1; j++){
-                next = stockDailyList.get(j);
+            for(int j = i+1; j< stockDailyList.size()-1; j++){
+                drop = stockDailyList.get(j);
+                if(end == 1){ // if we already found the interval in this range we break this loop
+                    end = 0; break;
+                }
+                 if (drop.value == current.value-val){
+                     for(int k = j+1; k< stockDailyList.size()-1; k++){
+                         backUp = stockDailyList.get(k);
 
-                 if ((float)next.value == current.value-val){
-                 for(int k = j; k< stockDailyList.size()-1; k++){
-                     next = stockDailyList.get(k);
+                         if (backUp.value == current.value){
+                             Interval interval = new Interval(current, backUp);
 
-                     if ((float)next.value == current.value){
-                         Interval interval = new Interval(current, next);
-                         if (!l.contains(interval))
-                            l.add(interval);}}}}}
-        for(int i = 0; i<l.size()-1; i++){
-            String currSDate = l.get(i).start.date, nextSDate = l.get(i+1).start.date;
-            String currEDate = l.get(i).end.date, nextEDate = l.get(i+1).end.date;
-            if ((Objects.equals(currSDate, nextSDate)) || (Objects.equals(currEDate, nextEDate))){
-                l.remove(i+1);}}
-
+                                l.add(interval);
+                                i = k+1; j = i+1; end = 1;
+                            break; //since we found the interval we stop this loop
+                              }}}}}
         return l;
     }
 
