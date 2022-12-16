@@ -121,7 +121,7 @@ public class SP500 {
                              Interval interval = new Interval(current, backUp);
 
                                 l.add(interval);
-                                i = k+1; j = i+1; end = 1;
+                                i = k; j = i+1; end = 1;
                             break; //since we found the interval we stop this loop
                               }}}}}
         return l;
