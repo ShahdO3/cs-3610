@@ -1,4 +1,6 @@
 import java.io.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -8,7 +10,7 @@ import java.util.*;
 public class SP500 {
     private static final List<StockDaily> stockDailyList = new ArrayList<>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParseException {
        readStockDailyFromCSV("C:\\Users\\Shahd Osman\\Documents\\Fall 2022-23\\CS-3610- Analysis and Design of Algorithms\\Historical Prices.csv");
 
 //        Sample Input:
@@ -28,19 +30,23 @@ public class SP500 {
 //        System.out.println();
 //
 //
+
         List<Interval> l = getShocksIntervals_technique1(0.05);
+        List<Interval> l2 = getShocksIntervals_technique2(0.05);
         int n = 1;
         for (Interval i:
              l) {
             System.out.println(n+": "+i + ", ");
             n++;
         }
+        n = 1;
+        System.out.println("\nTechnique 2:\n");
+        for (Interval i:
+                l2) {
+            System.out.println(n+": "+i + ", ");
+            n++;
+        }
 
-//        getShocksIntervals_technique2(3);
-//        for (StockDaily n :
-//                stockDailyList) {
-//            System.out.println(n + ", ");
-//        }
     }
 
     private static void readStockDailyFromCSV(String path) {
@@ -74,23 +80,6 @@ public class SP500 {
 
     }
 
-//    public static void countingSort(int A [ ] , int B [ ] , int max, int size) {
-//        int[] C = new int[max];
-//        int i , j , k ;
-//        for ( i =0; i <max; i ++) C[ i ] =0;
-//        for ( i = 0 ; i < size ; i ++)
-//        {
-//            j = A [ i ] ;
-//            C [ j ] ++ ;
-//        }
-//        for ( i = 1 ; i < max ; i ++) C [ i ] += C [ i - 1 ] ;
-//        {
-//            j = A [ i ] ; /* j i s the po s itio n i n vector C */
-//            k = C [ j ] ; /* k i s the kt h - p o s i t i o n i n the new vector B */
-//            B [ k - 1 ] = A [ i ] ; /* weput value o f vector A i n vector B */
-//            C [ j ] = C [ j ] - 1 ; /* we decrease the value o f C [ j ] by one, to place other equal valuesi n to the vector */
-//        }
-//    }
 
     /**
      * Brute Force algorithm, time complexity of O(n^3)
@@ -103,6 +92,7 @@ public class SP500 {
         List<Interval> l = new ArrayList<>();
         StockDaily current, drop, backUp; double val; int end = 0;
 
+//        stockDailyList.sort(new dateComparator());
         for(int i = 0; i< stockDailyList.size()-1; i++){
             current = stockDailyList.get(i);
 
@@ -127,30 +117,94 @@ public class SP500 {
         return l;
     }
 
-    public static List<Interval> getShocksIntervals_technique2(double percentage){
+    /**
+     * o(nlogn)
+     * @param percentage type double, the a% we are finding
+     * @return List<Interval> containing the interval where the drop occurred
+     * @throws ParseException since we are parsing a string to Date
+     */
+    public static List<Interval> getShocksIntervals_technique2(double percentage) throws ParseException {
         List<Interval> l = new ArrayList<>();
-        List<StockDaily> duplicates = new ArrayList<>(); //that contain all the stockDaily's with the same values
-        stockDailyList.sort(new stockDailyComparator());
 
-        for (int i = 0; i < stockDailyList.size()-2; i++){
+        List<List<StockDaily>> duplicates = new ArrayList<>(); //that contain all the stockDaily's with the same values
+
+        stockDailyList.sort(new stockDailyComparator()); //o(n logn)
+
+        for (int i = 0; i < stockDailyList.size()-2; i++){ //o(n)
             StockDaily temp = stockDailyList.get(i);
             StockDaily temp1 = stockDailyList.get(i+1);
 
             if (temp.value == temp1.value){
-                duplicates.add(temp); duplicates.add(temp1);
+                if (!duplicates.isEmpty()) {
+                    if (temp.value == duplicates.get(duplicates.size()-1).get(0).value){
+                        duplicates.get(duplicates.size()-1).add(temp);
+                        duplicates.get(duplicates.size()-1).add(temp1);
+                    }else {
+
+                        List<StockDaily> s = new ArrayList<>();
+                        s.add(temp);
+                        s.add(temp1);
+                        duplicates.add(s);
+                    }
+
+                }else {
+                    List<StockDaily> s = new ArrayList<>();
+                    s.add(temp);
+                    s.add(temp1);
+                    duplicates.add(s);
+                }
 
             }
         }
 
-        for (int i = 0; i < stockDailyList.size(); i++) {
-            StockDaily temp = duplicates.get(i);
 
-            double val = Math.round(temp.value) - (temp.value * percentage);
-        }
+        Interval lastI = new Interval(duplicates.get(0).get(0), duplicates.get(0).get(0));
+        Date largestSavedDate = new SimpleDateFormat("MM/dd/yyyy").parse("01/01/1999");
 
 
+        for (int i = 0; i < duplicates.size()-1; i++) { // o(n)
 
-//        for (StockDaily n :
+            for (int j = 0; j< duplicates.get(i).size()-1; j+=2){
+                List<StockDaily> curr = duplicates.get(i);
+
+                curr.sort(new dateComparator());
+                StockDaily temp = curr.get(j);
+                StockDaily temp2 = curr.get(j+1);
+//                System.out.println("temp = "+temp + "temp2 = "+temp2);
+
+                Date lastAddedEndD =new SimpleDateFormat("MM/dd/yyyy").parse(lastI.end.getDate());
+                Date lastAddedStartD =new SimpleDateFormat("MM/dd/yyyy").parse(lastI.start.getDate());
+
+                double val = temp.value - Math.round((temp.value * percentage));
+
+                int index = Collections.binarySearch(stockDailyList, new StockDaily("", val), new DuplicateComparator()); // o(logn)
+
+                Date start =new SimpleDateFormat("MM/dd/yyyy").parse(temp.getDate());
+                Date end =new SimpleDateFormat("MM/dd/yyyy").parse(temp2.getDate());
+
+                if(index>0) {
+
+//                    if ((lastAddedEndD.before(end)) && (lastAddedStartD.after(start))) {
+                    if (((start.after(lastAddedEndD)) && (end.after(lastAddedEndD)) )
+                            || ((start.before(lastAddedStartD)) && (end.before(lastAddedStartD)))){
+                        if (end.after(largestSavedDate)) {
+                            Date drop = new SimpleDateFormat("MM/dd/yyyy").parse(stockDailyList.get(index).getDate());
+
+                            if (((drop.before(start)) && (drop.after(end))) || ((drop.after(start)) && (drop.before(end)))) {
+                                Interval interval = new Interval(temp, temp2);
+                                l.add(interval);
+                                largestSavedDate = end;
+
+                                lastI = interval;
+                            }
+                        }
+                    }
+                }
+        }}
+
+
+
+//        for (List<StockDaily> n :
 //                duplicates) {
 //            System.out.println(n + ", ");
 //        }

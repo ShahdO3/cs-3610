@@ -1,0 +1,2 @@
+((start.after(lastAddedEndD)) && (end.after(lastAddedEndD)) ) 
+                    || ((start.before(lastAddedStartD)) && (end.before(lastAddedStartD)))

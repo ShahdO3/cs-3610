@@ -21,6 +21,10 @@ public class StockDaily  {
         return value;
     }
 
+    public String getDate() {
+        return date;
+    }
+
     @Override
     public String toString() {
         return "StockDaily{" +
